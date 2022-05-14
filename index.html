@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Puzzle Game</title>
+    <link rel="stylesheet" href="assets/jquery-ui.min.css">
+
+    <style>
+        #main_div{
+            width: 900px;
+            border: 2px solid black;
+            border-radius: 20px;
+            margin: 10px auto;
+            padding: 10px;
+        }
+        #piece_div{
+            width: 408px;
+            height: 408px;
+            border: 1px solid black;
+            float: left;
+            text-align: center;
+            font-size: 30px;
+            line-height: 400px;
+            position: relative;
+        }
+        #puzzle_div{
+            width: 408px;
+            height: 408px;
+            border: 1px solid black;
+            float: right;
+        }
+        ul{
+            list-style-type: none;
+            text-align: center;
+        }
+        ul button{
+            width: 100px;
+            border: 1px solid black;
+            font-size: 20px;
+            border-radius: 5px;
+            padding: 5px;
+            margin: 10px;
+        }
+        #btnRestart{
+            display: none;
+        }
+        .piece{
+            width: 100px;
+            height: 100px;
+            border: 1px solid black;
+            float: left;
+            background-image: url("assets/images/maxresdefault.jpg");
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body>
+<div id="main_div">
+    <div id="piece_div"></div>
+    <div id="puzzle_div"></div>
+    <ul id="buttons">
+        <li><button id="btnStart">Start</button></li>
+        <li><button id="btnRestart">Restart</button></li>
+    </ul>
+</div>
+
+<script src="assets/jquery-3.6.0.min.js"></script>
+<script src="assets/jquery-ui.min.js"></script>
+<script src="assets/oridomi.min.js"></script>
+
+<script>
+    /*Puzzle div kotu 16kta bedagemnima */
+    $(document).ready(function () {
+        var pieces = createPieces(true);
+        /*Move to Pieces Piece div Start button*/
+        $("#puzzle_div").html(pieces);
+        $("#btnStart").click(function () {
+            var pieces = $("#puzzle_div div");
+            pieces.each(function () {
+                var leftPosition = Math.floor(Math.random()*290) + "px";
+                var topPosition = Math.floor(Math.random()*290) + "px";
+                $(this).addClass("draggablePiece").css({
+                    position: "absolute",
+                    left: leftPosition,
+                    top: topPosition
+                });
+                $("#piece_div").append($(this));
+            });
+            /*Empty Puzzle div  show*/
+            var emptyPuzzle = createPieces(false);
+            $("#puzzle_div").html(emptyPuzzle);
+            $(this).hide();
+            $("#btnRestart").show();
+            implementLogic();
+        });
+
+        $("#btnRestart").click(function () {
+            var newPieces = createPieces(true);
+            $("#puzzle_div").html(newPieces);
+            $(this).hide();
+            $("#btnStart").show();
+            $("#piece_div").empty();
+        });
+
+        function createPieces(withImage) {
+            var rows = 4, columns = 4;
+            var pieces = "";
+            for (var i=0,top=0,order=0; i<rows; i++,top-=100){
+                for (var j=0,left=0; j<columns; j++,left-=100,order++){
+                    if(withImage){
+                        pieces += "<div style='background-position: "+ left + "px " + top + "px;' class='piece' data-order=" + order + "></div>";
+                    }else {
+                        pieces += "<div style='background-image: none' class='piece droppableSpace'></div>";
+                    }
+                }
+
+            }
+            return pieces;
+        }
+
+        /*Draggable*/
+        function checkIfPuzzleSolved() {
+            if($("#puzzle_div .droppedPiece").length != 16){
+                return false;
+            }
+            for (var k=0; k<16; k++){
+                var item = $("#puzzle_div .droppedPiece:eq(" + k + ")");
+                var order = item.data("order");
+                if (k != order){
+                    $("#piece_div").text("Game Over! Try Again!");
+                    return false;
+                }
+            }
+            $("#piece_div").text("Good Job! You are Win the Game");
+            return true;
+        }
+        function implementLogic() {
+            $(".draggablePiece").draggable({
+                revert: "invalid",
+                /*Ek kotuwaka idal wena kotuwkt giyam hitiy kotuwt thwa ekk add krnn*/
+                start: function () {
+                    if($(this).hasClass("droppedPiece")){
+                        $(this).removeClass("droppedPiece");
+                        $(this).parent().removeClass("piecePresent");
+                    }
+                }
+            });
+            /*Droppable*/
+            $(".droppableSpace").droppable({
+                accept:function(){
+                   return !$(this).hasClass("piecePresent")
+                },
+                drop:function (event,ui) {
+                    var draggableElement = ui.draggable;
+                    var droppedOn = $(this);
+                    droppedOn.addClass("piecePresent");
+                    $(draggableElement)
+                        .addClass("droppedPiece")
+                        .css(({
+                            top: 0,
+                            left: 0,
+                            position: "relative"
+                        })).appendTo(droppedOn);
+                    checkIfPuzzleSolved();
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
